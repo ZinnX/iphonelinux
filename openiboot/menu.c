@@ -24,6 +24,27 @@
 #include "ftl.h"
 #include "scripting.h"
 
+#include "nvram.h"
+
+#include "images/SettingsPNG.h"
+#include "images/SettingsSelectedPNG.h"
+
+#include "images/SavePNG.h"
+#include "images/SaveSelectedPNG.h"
+#include "images/SaveExitPNG.h"
+#include "images/SaveExitSelectedPNG.h"
+#include "images/SetHeaderPNG.h"
+#include "images/0PNG.h"
+#include "images/1PNG.h"
+#include "images/2PNG.h"
+#include "images/4PNG.h"
+#include "images/6PNG.h"
+#include "images/8PNG.h"
+#include "images/10PNG.h"
+
+#include "images/StarPNG.h"
+#include "images/RStarPNG.h"
+
 int globalFtlHasBeenRestored = 0; /* global variable to tell wether a ftl_restore has been done*/
 
 static uint32_t FBWidth;
@@ -60,10 +81,97 @@ static int imgHeaderHeight;
 static int imgHeaderX;
 static int imgHeaderY;
 
+
+static uint32_t* imgSettings;
+static uint32_t* imgSettingsSelected;
+static int imgSettingsWidth;
+static int imgSettingsHeight;
+static int imgSettingsX;
+static int imgSettingsY;
+
+static uint32_t* imgSetHeader;
+static int imgSetHeaderWidth;
+static int imgSetHeaderHeight;
+static int imgSetHeaderX;
+static int imgSetHeaderY;
+
+static uint32_t* imgSaveSelected;
+static uint32_t* imgSave;
+static int imgSaveWidth;
+static int imgSaveHeight;
+static int imgSaveX;
+static int imgSaveY;
+
+static uint32_t* imgSaveExitSelected;
+static uint32_t* imgSaveExit;
+static int imgSaveExitWidth;
+static int imgSaveExitHeight;
+static int imgSaveExitX;
+static int imgSaveExitY;
+
+static uint32_t* img1;
+static uint32_t* img2;
+static uint32_t* img4;
+static uint32_t* img6;
+static uint32_t* img8;
+static uint32_t* img10;
+static uint32_t* img0;
+
+static int img1Width;
+static int img1Height;
+//static int img1X;
+//static int img1Y;
+
+static int img2Width;
+static int img2Height;
+//static int img2X;
+//static int img2Y;
+
+static int img4Width;
+static int img4Height;
+//static int img4X;
+//static int img4Y;
+
+static int img6Width;
+static int img6Height;
+//static int img6X;
+//static int img6Y;
+
+static int img8Width;
+static int img8Height;
+//static int img8X;
+//static int img8Y;
+
+static int img10Width;
+static int img10Height;
+//static int img10X;
+//static int img10Y;
+
+static int img0Width;
+static int img0Height;
+//static int img0X;
+//static int img0Y;
+
+static int imgTOX;
+static int imgTOY;
+
+static uint32_t* imgStar;
+static int imgStarWidth;
+static int imgStarHeight;
+static uint32_t* imgRStar;
+
+static int defaultOS;
+static int timeout;
+static int tempOS;
+static int quickBoot;
+
 typedef enum MenuSelection {
 	MenuSelectioniPhoneOS,
 	MenuSelectionConsole,
-	MenuSelectionAndroidOS
+	MenuSelectionAndroidOS,
+	MenuSelectionSettings,
+	MenuSelectionSave,
+	MenuSelectionSaveExit
 } MenuSelection;
 
 static MenuSelection Selection;
@@ -81,18 +189,27 @@ static void drawSelectionBox() {
 		framebuffer_draw_image(imgiPhoneOSSelected, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSettings, imgSettingsX, imgSettingsY, imgSettingsWidth, imgSettingsHeight);
 	}
 
 	if(Selection == MenuSelectionConsole) {
 		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsoleSelected, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSettings, imgSettingsX, imgSettingsY, imgSettingsWidth, imgSettingsHeight);
 	}
 
 	if(Selection == MenuSelectionAndroidOS) {
 		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOSSelected, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSettings, imgSettingsX, imgSettingsY, imgSettingsWidth, imgSettingsHeight);
+	}
+	if(Selection == MenuSelectionSettings) {
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSettingsSelected, imgSettingsX, imgSettingsY, imgSettingsWidth, imgSettingsHeight);
 	}
 
 	lcd_window_address(2, (uint32_t) CurFramebuffer);
@@ -106,21 +223,553 @@ static void toggle(int forward) {
 		else if(Selection == MenuSelectionConsole)
 			Selection = MenuSelectionAndroidOS;
 		else if(Selection == MenuSelectionAndroidOS)
+			Selection = MenuSelectionSettings;
+		else if(Selection == MenuSelectionSettings)
 			Selection = MenuSelectioniPhoneOS;
 	} else
 	{
 		if(Selection == MenuSelectioniPhoneOS)
+			Selection = MenuSelectionSettings;
+		else if(Selection == MenuSelectionSettings)
 			Selection = MenuSelectionAndroidOS;
 		else if(Selection == MenuSelectionAndroidOS)
 			Selection = MenuSelectionConsole;
 		else if(Selection == MenuSelectionConsole)
 			Selection = MenuSelectioniPhoneOS;
 	}
-
 	drawSelectionBox();
 }
 
-int menu_setup(int timeout) {
+
+static void toggleSAVE(int forward) {
+	if(forward)
+	{
+		if(Selection == MenuSelectioniPhoneOS)
+			Selection = MenuSelectionConsole;
+		else if(Selection == MenuSelectionConsole)
+			Selection = MenuSelectionAndroidOS;
+		else if(Selection == MenuSelectionAndroidOS)
+			Selection = MenuSelectionSave;
+		else if(Selection == MenuSelectionSave)
+			Selection = MenuSelectionSaveExit;
+		else if(Selection == MenuSelectionSaveExit)
+			Selection = MenuSelectioniPhoneOS;
+	} else
+	{
+		if(Selection == MenuSelectioniPhoneOS)
+			Selection = MenuSelectionSaveExit;
+		else if(Selection == MenuSelectionSaveExit)
+			Selection = MenuSelectionSave;
+		else if(Selection == MenuSelectionSave)
+			Selection = MenuSelectionAndroidOS;
+		else if(Selection == MenuSelectionAndroidOS)
+			Selection = MenuSelectionConsole;
+		else if(Selection == MenuSelectionConsole)
+			Selection = MenuSelectioniPhoneOS;
+
+	}
+
+}
+
+static void drawSetupPage() {
+	volatile uint32_t* oldFB = CurFramebuffer;
+
+	CurFramebuffer = OtherFramebuffer;
+	currentWindow->framebuffer.buffer = CurFramebuffer;
+	OtherFramebuffer = oldFB;
+
+	if(Selection == MenuSelectioniPhoneOS) {
+		framebuffer_draw_image(imgiPhoneOSSelected, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+	}
+
+	if(Selection == MenuSelectionConsole) {
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsoleSelected, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+	}
+
+	if(Selection == MenuSelectionAndroidOS) {
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOSSelected, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+	}
+	if(Selection == MenuSelectionSave) {
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSaveSelected, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+	}
+	if(Selection == MenuSelectionSaveExit) {
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExitSelected, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+	}
+	switch(defaultOS){
+		case 0:		
+			framebuffer_draw_image(imgStar, imgiPhoneOSX, imgiPhoneOSY, imgStarWidth, imgStarHeight);
+			break;
+		case 2:		
+			framebuffer_draw_image(imgStar, imgConsoleX, imgConsoleY, imgStarWidth, imgStarHeight);
+			break;
+		case 1:		
+			framebuffer_draw_image(imgStar, imgAndroidOSX, imgAndroidOSY, imgStarWidth, imgStarHeight);
+			break;
+		default:
+			break;
+		}
+	switch(tempOS){
+		case 1:		
+			framebuffer_draw_image(imgRStar, imgiPhoneOSX, imgiPhoneOSY+40, imgStarWidth, imgStarHeight);
+			break;
+		case 3:		
+			framebuffer_draw_image(imgRStar, imgConsoleX, imgConsoleY+40, imgStarWidth, imgStarHeight);
+			break;
+		case 2:		
+			framebuffer_draw_image(imgRStar, imgAndroidOSX, imgAndroidOSY+40, imgStarWidth, imgStarHeight);
+			break;
+		default:
+			break;
+		}
+/*	switch(quickBoot){
+		case 1:		
+			framebuffer_draw_image(imgRStar, imgiPhoneOSX, imgiPhoneOSY+40, imgStarWidth, imgStarHeight);
+			break;
+		case 3:		
+			framebuffer_draw_image(imgRStar, imgConsoleX, imgConsoleY+40, imgStarWidth, imgStarHeight);
+			break;
+		case 2:		
+			framebuffer_draw_image(imgRStar, imgAndroidOSX, imgAndroidOSY+40, imgStarWidth, imgStarHeight);
+			break;
+		default:
+			break;
+		}
+*/
+	switch(timeout){
+		case 0:{
+			framebuffer_draw_image(img0, imgTOX, imgTOY, img0Width, img0Height);
+			break;
+		}
+		case 1:{
+			framebuffer_draw_image(img1, imgTOX, imgTOY, img1Width, img1Height);
+			break;
+		}
+		case 2:{
+			framebuffer_draw_image(img2, imgTOX, imgTOY, img2Width, img2Height);
+			break;
+		}
+		case 4:{
+			framebuffer_draw_image(img4, imgTOX, imgTOY, img4Width, img4Height);
+			break;
+		}
+		case 6:{
+			framebuffer_draw_image(img6, imgTOX, imgTOY, img6Width, img6Height);
+			break;
+		}
+		case 8:{
+			framebuffer_draw_image(img8, imgTOX, imgTOY, img8Width, img8Height);
+			break;
+		}
+		case 10:{
+			framebuffer_draw_image(img10, imgTOX, imgTOY, img10Width, img10Height);
+			break;
+		}
+
+	}
+
+	lcd_window_address(2, (uint32_t) CurFramebuffer);
+}
+
+
+static int toggleTO(int forward) {
+
+	if(forward)
+	{
+//		framebuffer_print_force("Down button\n");	
+		switch (timeout)
+		{
+		case 0:
+			//framebuffer_print_force("timeout 10s\n");	
+			timeout=10;
+			//draw 10			
+			break;
+			
+		case 1:
+			timeout=0;
+			//draw 10
+			break;
+			
+		case 2:
+			timeout=1;
+			//draw 10
+			break;
+			
+		case 4:
+			timeout=2;
+			//draw 10
+			break;
+			
+		case 6:
+			timeout=4;
+			//draw 10
+			break;
+			
+		case 8:
+			timeout=6;
+			//draw 10
+			break;
+			
+		case 10:
+			timeout=8;
+			//draw 10
+			break;
+			
+		default :
+			framebuffer_print_force("DEFAULT TimeOut set 10s\n");	
+			timeout=10;
+			break;
+			
+		}
+	} else
+	{
+//		framebuffer_print_force("UP button\n");	
+		switch (timeout){
+		case 0:
+			timeout=1;
+			//draw 10			
+			break;
+			
+		case 1:
+			timeout=2;
+			//draw 10
+			break;
+			
+		case 2:
+			timeout=4;
+			//draw 10
+			break;
+		case 4 :
+			timeout=6;
+			//draw 10
+			break;
+			
+		case 6 :
+			timeout=8;
+			//draw 10
+			break;
+			
+		case 8 :
+		//framebuffer_print_force("TimeOut set 10s\n");	
+			timeout=10;
+			//draw 10
+			break;
+			
+		case 10 :
+			timeout=0;
+			//draw 10
+			break;
+			
+		default :
+			framebuffer_print_force("DEFAULT TimeOut set 10s\n");	
+			timeout=10;
+			break;
+			
+		}	
+	}
+/*	char bufa[5];
+	sprintf(bufa, "%d", timeout);
+	framebuffer_print_force("TimeOut set to ");	
+	framebuffer_print_force(bufa);
+	framebuffer_print_force("s\n");*/
+	drawSetupPage();
+	return(timeout);
+}
+
+/* ***********************OIB_SETUP*******************************/
+int oib_setup(int ttimeout, int ddefaultOS) {
+	quickBoot = 0;
+	timeout = ttimeout/1000;
+	defaultOS = ddefaultOS;
+	tempOS=0;
+	char bufa[5];
+
+	CurFramebuffer = OtherFramebuffer;
+	currentWindow->framebuffer.buffer = CurFramebuffer;
+	lcd_window_address(2, (uint32_t) CurFramebuffer);
+
+	framebuffer_setdisplaytext(TRUE);
+	framebuffer_clear();
+
+	FBWidth = currentWindow->framebuffer.width;
+	FBHeight = currentWindow->framebuffer.height;	
+
+	imgiPhoneOS = framebuffer_load_image(dataiPhoneOSPNG, dataiPhoneOSPNG_size, &imgiPhoneOSWidth, &imgiPhoneOSHeight, TRUE);
+	imgiPhoneOSSelected = framebuffer_load_image(dataiPhoneOSSelectedPNG, dataiPhoneOSSelectedPNG_size, &imgiPhoneOSWidth, &imgiPhoneOSHeight, TRUE);
+	imgConsole = framebuffer_load_image(dataConsolePNG, dataConsolePNG_size, &imgConsoleWidth, &imgConsoleHeight, TRUE);
+	imgConsoleSelected = framebuffer_load_image(dataConsoleSelectedPNG, dataConsoleSelectedPNG_size, &imgConsoleWidth, &imgConsoleHeight, TRUE);
+	imgAndroidOS_unblended = framebuffer_load_image(dataAndroidOSPNG, dataAndroidOSPNG_size, &imgAndroidOSWidth, &imgAndroidOSHeight, TRUE);
+	imgAndroidOSSelected_unblended = framebuffer_load_image(dataAndroidOSSelectedPNG, dataAndroidOSSelectedPNG_size, &imgAndroidOSWidth, &imgAndroidOSHeight, TRUE);
+	imgSave = framebuffer_load_image(dataSavePNG, dataSavePNG_size, &imgSaveWidth, &imgSaveHeight, TRUE);
+	imgSaveSelected = framebuffer_load_image(dataSaveSelectedPNG, dataSaveSelectedPNG_size, &imgSaveWidth, &imgSaveHeight, TRUE);
+	imgSaveExit = framebuffer_load_image(dataSaveExitPNG, dataSavePNG_size, &imgSaveExitWidth, &imgSaveExitHeight, TRUE);
+	imgSaveExitSelected = framebuffer_load_image(dataSaveExitSelectedPNG, dataSaveSelectedPNG_size, &imgSaveExitWidth, &imgSaveExitHeight, TRUE);
+	imgHeader = framebuffer_load_image(dataHeaderPNG, dataHeaderPNG_size, &imgHeaderWidth, &imgHeaderHeight, TRUE);
+	imgSetHeader = framebuffer_load_image(dataSetHeaderPNG, dataSetHeaderPNG_size, &imgSetHeaderWidth, &imgSetHeaderHeight, TRUE);
+	img0 = framebuffer_load_image(data0PNG, data0PNG_size, &img0Width, &img0Height, TRUE);
+	img1 = framebuffer_load_image(data1PNG, data1PNG_size, &img1Width, &img1Height, TRUE);
+	img2 = framebuffer_load_image(data2PNG, data2PNG_size, &img2Width, &img2Height, TRUE);
+	img4 = framebuffer_load_image(data4PNG, data4PNG_size, &img4Width, &img4Height, TRUE);
+	img6 = framebuffer_load_image(data6PNG, data6PNG_size, &img6Width, &img6Height, TRUE);
+	img8 = framebuffer_load_image(data8PNG, data8PNG_size, &img8Width, &img8Height, TRUE);
+	img10 = framebuffer_load_image(data10PNG, data10PNG_size, &img10Width, &img10Height, TRUE);
+
+	imgStar = framebuffer_load_image(dataStarPNG, dataStarPNG_size, &imgStarWidth, &imgStarHeight, TRUE);
+	imgRStar = framebuffer_load_image(dataRStarPNG, dataRStarPNG_size, &imgStarWidth, &imgStarHeight, TRUE);
+
+	bufferPrintf("menu: images loaded\r\n");
+
+	imgiPhoneOSX = (FBWidth - imgiPhoneOSWidth) / 2;
+	imgiPhoneOSY = 84;
+
+	imgTOX = (FBWidth - img0Width);
+	imgTOY = 90;
+
+	imgConsoleX = (FBWidth - imgConsoleWidth) / 2;
+	imgConsoleY = 207;
+
+	imgAndroidOSX = (FBWidth - imgAndroidOSWidth) / 2;
+	imgAndroidOSY = 330;
+
+	imgSaveX = (FBWidth - imgSaveWidth);
+	imgSaveY = 170;
+
+	imgSaveExitX = (FBWidth - imgSaveExitWidth);
+	imgSaveExitY = 370;
+
+	imgHeaderX = (FBWidth - imgHeaderWidth) / 2;
+	imgHeaderY = 17;
+	imgSetHeaderX = (FBWidth - imgSetHeaderWidth) / 2;
+	imgSetHeaderY = 75;
+
+	framebuffer_setdisplaytext(TRUE);
+	framebuffer_clear();
+
+	framebuffer_draw_image(imgHeader, imgHeaderX, imgHeaderY, imgHeaderWidth, imgHeaderHeight);
+	framebuffer_draw_image(imgSetHeader, imgSetHeaderX, imgSetHeaderY, imgSetHeaderWidth, imgSetHeaderHeight);
+
+	OtherFramebuffer = CurFramebuffer;
+
+	framebuffer_draw_rect_hgradient(0, 42, 0, 360, FBWidth, (FBHeight - 12) - 360);
+	framebuffer_draw_rect_hgradient(0x22, 0x22, 0, FBHeight - 12, FBWidth, 12);
+
+	framebuffer_setloc(0, 47);
+	framebuffer_setcolors(COLOR_WHITE, 0x222222);
+	framebuffer_print_force("Hold POWER for 10s to shutdown w/o saving\nTap POWER to change selection. Press HOME to select\nVol up/down to change Timeout (1,2,4,6,8,10s)\n");
+	framebuffer_print_force(OPENIBOOT_VERSION_STR);
+	framebuffer_setcolors(COLOR_WHITE, COLOR_BLACK);
+	framebuffer_setloc(0, 0);
+
+	imgAndroidOS = malloc(imgAndroidOSWidth * imgAndroidOSHeight * sizeof(uint32_t));
+	imgAndroidOSSelected = malloc(imgAndroidOSWidth * imgAndroidOSHeight * sizeof(uint32_t));
+
+	framebuffer_capture_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+	framebuffer_capture_image(imgAndroidOSSelected, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+
+	framebuffer_blend_image(imgAndroidOS, imgAndroidOSWidth, imgAndroidOSHeight, imgAndroidOS_unblended, imgAndroidOSWidth, imgAndroidOSHeight, 0, 0);
+	framebuffer_blend_image(imgAndroidOSSelected, imgAndroidOSWidth, imgAndroidOSHeight, imgAndroidOSSelected_unblended, imgAndroidOSWidth, imgAndroidOSHeight, 0, 0);
+
+	Selection = MenuSelectioniPhoneOS;
+	switch(defaultOS){
+		case 0: {	/*iphone*/
+			Selection = MenuSelectioniPhoneOS;
+			break;
+		}
+		case 1: {	/*android*/
+			Selection = MenuSelectionAndroidOS;
+			break;
+		}
+		case 2: {	/*console*/
+			Selection = MenuSelectionConsole;
+			break;
+		}
+	}
+
+
+	OtherFramebuffer = CurFramebuffer;
+	CurFramebuffer = (volatile uint32_t*) NextFramebuffer;
+	drawSetupPage();
+
+	framebuffer_print_force("DefaultOS =");
+	sprintf(bufa, "%d", defaultOS);
+	framebuffer_print_force(bufa);
+	framebuffer_print_force("\nTimeout =");
+	sprintf(bufa, "%d", timeout);
+	framebuffer_print_force(bufa);
+	framebuffer_print_force("s\n");
+
+	pmu_set_iboot_stage(0);
+
+	memcpy((void*)NextFramebuffer, (void*) CurFramebuffer, NextFramebuffer - (uint32_t)CurFramebuffer);
+
+	uint64_t startTime = timer_get_system_microtime();
+	uint64_t powerStartTime = timer_get_system_microtime();
+
+rebump:
+	while(TRUE) {
+		if(buttons_is_pushed(BUTTONS_HOLD)) {
+			if(has_elapsed(powerStartTime, (uint64_t)300 * 1000)) {
+
+			} else if(has_elapsed(powerStartTime, (uint64_t)200 * 1000)) {
+				toggleSAVE(TRUE);
+				drawSetupPage();
+			}
+			if(has_elapsed(powerStartTime, (uint64_t)10000 * 1000)) {
+				pmu_poweroff();
+			}
+			udelay(200000);
+		} else {
+			powerStartTime = timer_get_system_microtime();
+			udelay(200000);
+		}
+#ifndef CONFIG_IPOD
+		if(!buttons_is_pushed(BUTTONS_VOLUP)) {
+			toggleTO(FALSE);
+			startTime = timer_get_system_microtime();
+			udelay(200000);
+		}
+		if(!buttons_is_pushed(BUTTONS_VOLDOWN)) {
+			toggleTO(TRUE);
+			startTime = timer_get_system_microtime();
+			udelay(200000);
+		}
+#endif
+
+		if(buttons_is_pushed(BUTTONS_HOME) && buttons_is_pushed(BUTTONS_HOLD)) {
+			switch(Selection){
+			case MenuSelectioniPhoneOS:
+				tempOS=1;
+				quickBoot=1;
+				break;			
+			case MenuSelectionConsole:
+				tempOS=3;
+				quickBoot=3;
+				break;
+			case MenuSelectionAndroidOS:
+				tempOS=2;				
+				quickBoot=2;
+				break;
+			default :
+				break;
+			}	
+		}
+		
+		if(buttons_is_pushed(BUTTONS_HOME)) {
+			break;
+		}
+
+		udelay(10000);
+	}
+
+	if(Selection == MenuSelectioniPhoneOS) {
+		defaultOS=0;
+		framebuffer_print_force("defaultOS set (iphone)\n");
+		drawSetupPage();
+		goto rebump;
+	}
+
+	if(Selection == MenuSelectionConsole) {
+		defaultOS=2;
+		framebuffer_print_force("defaultOS set (console)\n");	
+		drawSetupPage();
+		goto rebump;
+}
+
+	if(Selection == MenuSelectionSave) {
+		// Reset framebuffer back to original if necessary
+		if((uint32_t) CurFramebuffer == NextFramebuffer)
+		{
+			CurFramebuffer = OtherFramebuffer;
+			currentWindow->framebuffer.buffer = CurFramebuffer;
+			lcd_window_address(2, (uint32_t) CurFramebuffer);
+		}
+
+		framebuffer_setdisplaytext(TRUE);
+		framebuffer_clear();
+		sprintf(bufa, "%d", defaultOS);
+		nvram_setvar("opib-default-os", bufa);
+		sprintf(bufa, "%d", timeout);
+		nvram_setvar("opib-menu-timeout", bufa);
+// dont save the tempOS setting because we are going to use quickboot and skip having to erase tempboot on startup
+//		sprintf(bufa, "%d", tempOS);
+//		nvram_setvar("opib-temp-os", bufa);
+		nvram_save();
+		udelay(200000);
+		udelay(200000);
+	}
+	if(Selection == MenuSelectionSaveExit) {
+		// Reset framebuffer back to original if necessary
+		if((uint32_t) CurFramebuffer == NextFramebuffer)
+		{
+			CurFramebuffer = OtherFramebuffer;
+			currentWindow->framebuffer.buffer = CurFramebuffer;
+			lcd_window_address(2, (uint32_t) CurFramebuffer);
+		}
+
+		framebuffer_setdisplaytext(TRUE);
+		framebuffer_clear();
+		sprintf(bufa, "%d", defaultOS);
+		nvram_setvar("opib-default-os", bufa);
+		sprintf(bufa, "%d", timeout);
+		nvram_setvar("opib-menu-timeout", bufa);
+		sprintf(bufa, "%d", tempOS);
+		nvram_setvar("opib-temp-os", bufa);
+		nvram_save();
+		udelay(200000);
+		udelay(200000);
+		pmu_poweroff();
+	}
+
+	if(Selection == MenuSelectionAndroidOS) {
+		defaultOS=1;
+		framebuffer_print_force("defaultOS set (DROID)\n");
+		drawSetupPage();
+		goto rebump;
+	}
+
+
+	return 0;
+}
+
+
+/* ***********************MENU_SETUP*******************************/
+int menu_setup(int ttimeout, int ddefaultOS) {
+	timeout=ttimeout * 1000;
+	defaultOS=ddefaultOS;
+	tempOS=0;
+	const char* stempOS = nvram_getvar("opib-temp-os");
+	if(!(quickBoot==0)){
+		defaultOS=quickBoot-1;
+		timeout=1;
+	}
+	if(stempOS)
+			tempOS = parseNumber(stempOS);
+
+	if((!(tempOS==0)) && (quickBoot==0)){
+		timeout=1;
+		defaultOS=tempOS-1;
+		nvram_setvar("opib-temp-os", "0");
+		nvram_save();
+	}
 	FBWidth = currentWindow->framebuffer.width;
 	FBHeight = currentWindow->framebuffer.height;	
 
@@ -131,6 +780,9 @@ int menu_setup(int timeout) {
 	imgAndroidOS_unblended = framebuffer_load_image(dataAndroidOSPNG, dataAndroidOSPNG_size, &imgAndroidOSWidth, &imgAndroidOSHeight, TRUE);
 	imgAndroidOSSelected_unblended = framebuffer_load_image(dataAndroidOSSelectedPNG, dataAndroidOSSelectedPNG_size, &imgAndroidOSWidth, &imgAndroidOSHeight, TRUE);
 	imgHeader = framebuffer_load_image(dataHeaderPNG, dataHeaderPNG_size, &imgHeaderWidth, &imgHeaderHeight, TRUE);
+
+	imgSettings = framebuffer_load_image(dataSettingsPNG, dataSettingsPNG_size, &imgSettingsWidth, &imgSettingsHeight, TRUE);
+	imgSettingsSelected = framebuffer_load_image(dataSettingsSelectedPNG, dataSettingsSelectedPNG_size, &imgSettingsWidth, &imgSettingsHeight, TRUE);
 
 	bufferPrintf("menu: images loaded\r\n");
 
@@ -146,6 +798,9 @@ int menu_setup(int timeout) {
 	imgHeaderX = (FBWidth - imgHeaderWidth) / 2;
 	imgHeaderY = 17;
 
+	imgSettingsX = (FBWidth - imgSettingsWidth);
+	imgSettingsY = 370;
+
 	framebuffer_draw_image(imgHeader, imgHeaderX, imgHeaderY, imgHeaderWidth, imgHeaderHeight);
 
 	framebuffer_draw_rect_hgradient(0, 42, 0, 360, FBWidth, (FBHeight - 12) - 360);
@@ -153,6 +808,13 @@ int menu_setup(int timeout) {
 
 	framebuffer_setloc(0, 47);
 	framebuffer_setcolors(COLOR_WHITE, 0x222222);
+	framebuffer_print_force("Vol up/down to toggle. Home btn to select. Hold POWER for 4s to shutdown\n");
+	char defa[5];
+	sprintf(defa, "%d", defaultOS);
+	framebuffer_print_force(defa);
+	char defb[5];
+	sprintf(defb, "%d", timeout);
+	framebuffer_print_force(defb);
 	framebuffer_print_force(OPENIBOOT_VERSION_STR);
 	framebuffer_setcolors(COLOR_WHITE, COLOR_BLACK);
 	framebuffer_setloc(0, 0);
@@ -167,6 +829,20 @@ int menu_setup(int timeout) {
 	framebuffer_blend_image(imgAndroidOSSelected, imgAndroidOSWidth, imgAndroidOSHeight, imgAndroidOSSelected_unblended, imgAndroidOSWidth, imgAndroidOSHeight, 0, 0);
 
 	Selection = MenuSelectioniPhoneOS;
+	switch(defaultOS){
+		case 0: 	/*iphone*/
+			Selection = MenuSelectioniPhoneOS;
+			break;
+		case 1: 	/*android*/
+			Selection = MenuSelectionAndroidOS;
+			break;
+		case 2: 	/*console*/
+			Selection = MenuSelectionConsole;
+			break;
+		default:
+			break;
+	}
+
 
 	OtherFramebuffer = CurFramebuffer;
 	CurFramebuffer = (volatile uint32_t*) NextFramebuffer;
@@ -178,10 +854,23 @@ int menu_setup(int timeout) {
 	memcpy((void*)NextFramebuffer, (void*) CurFramebuffer, NextFramebuffer - (uint32_t)CurFramebuffer);
 
 	uint64_t startTime = timer_get_system_microtime();
+	uint64_t powerStartTime = timer_get_system_microtime();
+
+	//timeout = timeout * 1000;
 	while(TRUE) {
 		if(buttons_is_pushed(BUTTONS_HOLD)) {
-			toggle(TRUE);
-			startTime = timer_get_system_microtime();
+			if(has_elapsed(powerStartTime, (uint64_t)300 * 1000)) {
+
+			} else if(has_elapsed(powerStartTime, (uint64_t)200 * 1000)) {
+				toggle(TRUE);
+			}
+
+			if(has_elapsed(powerStartTime, (uint64_t)4000 * 1000)) {
+				pmu_poweroff();
+			}
+			udelay(200000);
+		} else {
+			powerStartTime = timer_get_system_microtime();
 			udelay(200000);
 		}
 #ifndef CONFIG_IPOD
@@ -228,6 +917,38 @@ int menu_setup(int timeout) {
 		framebuffer_clear();
 	}
 
+	if(Selection == MenuSelectionSettings) {
+		// Reset framebuffer back to original if necessary
+			CurFramebuffer = OtherFramebuffer;
+			currentWindow->framebuffer.buffer = CurFramebuffer;
+			lcd_window_address(2, (uint32_t) CurFramebuffer);
+		framebuffer_setdisplaytext(TRUE);
+		framebuffer_clear();
+		udelay(10000);
+//		nvram_setvar("opib-default-os", "2");
+//		udelay(200000);
+//		nvram_save();
+		framebuffer_setdisplaytext(TRUE);
+		framebuffer_clear();
+		udelay(10000);
+		oib_setup(timeout, defaultOS);
+//apparently we would like to return...other wise, we would have shutdown....
+//clear screen
+		framebuffer_setdisplaytext(TRUE);
+		framebuffer_clear();
+//get our settings again, i hate reading off of nvram again
+/*		const char* sMenuTimeout = nvram_getvar("opib-menu-timeout");
+		const char* sDefaultOS = nvram_getvar("opib-default-os");
+		if(sDefaultOS)
+			defaultOS = parseNumber(sDefaultOS);
+		if(sMenuTimeout)
+			timeout = parseNumber(sMenuTimeout);
+*/
+//and re-run menu_setup;
+		menu_setup(timeout, defaultOS);
+		
+	}
+
 	if(Selection == MenuSelectionAndroidOS) {
 		// Reset framebuffer back to original if necessary
 		if((uint32_t) CurFramebuffer == NextFramebuffer)
@@ -241,9 +962,7 @@ int menu_setup(int timeout) {
 		framebuffer_clear();
 
 #ifndef NO_HFS
-#ifndef CONFIG_IPOD
 		radio_setup();
-#endif
 		nand_setup();
 		fs_setup();
 		if(globalFtlHasBeenRestored) /* if ftl has been restored, sync it, so kernel doesn't have to do a ftl_restore again */
