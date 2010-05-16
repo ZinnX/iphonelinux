@@ -411,6 +411,10 @@ void cmd_saveenv(int argc, char** argv) {
 void cmd_install(int argc, char** argv) {
 	bufferPrintf("Installing Images...\r\n");
 	images_install(&_start, (uint32_t)&OpenIBootEnd - (uint32_t)&_start);
+	bufferPrintf("Setting version and defaulting menu-timeout to 10s\r\n");
+	nvram_setvar("opib-version", "0.1.1-zinnx");
+	nvram_setvar("opib-menu-timeout", "10000");
+	nvram_save();
 	bufferPrintf("Images installed\r\n");
 }
 

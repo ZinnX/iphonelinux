@@ -661,14 +661,12 @@ rebump:
 
 	if(Selection == MenuSelectioniPhoneOS) {
 		defaultOS=0;
-		//framebuffer_print_force("defaultOS set (iphone)\n");
 		drawSetupPage();
 		goto rebump;
 	}
 
 	if(Selection == MenuSelectionConsole) {
 		defaultOS=2;
-		//framebuffer_print_force("defaultOS set (console)\n");	
 		drawSetupPage();
 		goto rebump;
 }
@@ -720,7 +718,6 @@ rebump:
 
 	if(Selection == MenuSelectionAndroidOS) {
 		defaultOS=1;
-		//framebuffer_print_force("defaultOS set (DROID)\n");
 		drawSetupPage();
 		goto rebump;
 	}
@@ -862,7 +859,7 @@ int menu_setup(int ttimeout) {
 			if(has_elapsed(startTime, (uint64_t)(timeout - (timeoutLeft * 1000)) * 1000)){
 				timeoutLeft -= 1;
 				if(timeoutLeft != timeoutLeftb){
-					setTOimg(timeoutLeft);
+					setTOimg(timeoutLeft + 1);
 					framebuffer_draw_image(imgTO, imgTOX, imgTOY, imgTOWidth, imgTOHeight);				
 					lcd_window_address(2, (uint32_t) CurFramebuffer);
 					OtherFramebuffer = CurFramebuffer;
@@ -875,6 +872,8 @@ int menu_setup(int ttimeout) {
 			
 			if(has_elapsed(powerStartTime, (uint64_t)200 * 1000)) {
 				startTime = timer_get_system_microtime();
+				timeoutLeft = timeout / 1000;
+				timeoutLeftb = timeout / 1000;
 				toggle(TRUE);
 			}
 
@@ -891,11 +890,15 @@ int menu_setup(int ttimeout) {
 		if(!buttons_is_pushed(BUTTONS_VOLUP)) {
 			toggle(FALSE);
 			startTime = timer_get_system_microtime();
+			timeoutLeft = timeout / 1000;
+			timeoutLeftb = timeout / 1000;
 			udelay(200000);
 		}
 		if(!buttons_is_pushed(BUTTONS_VOLDOWN)) {
 			toggle(TRUE);
 			startTime = timer_get_system_microtime();
+			timeoutLeft = timeout / 1000;
+			timeoutLeftb = timeout / 1000;
 			udelay(200000);
 		}
 #endif
