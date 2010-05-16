@@ -37,9 +37,13 @@
 #include "images/0PNG.h"
 #include "images/1PNG.h"
 #include "images/2PNG.h"
+#include "images/3PNG.h"
 #include "images/4PNG.h"
+#include "images/5PNG.h"
 #include "images/6PNG.h"
+#include "images/7PNG.h"
 #include "images/8PNG.h"
+#include "images/9PNG.h"
 #include "images/10PNG.h"
 
 #include "images/StarPNG.h"
@@ -111,49 +115,22 @@ static int imgSaveExitY;
 
 static uint32_t* img1;
 static uint32_t* img2;
+static uint32_t* img3;
 static uint32_t* img4;
+static uint32_t* img5;
 static uint32_t* img6;
+static uint32_t* img7;
 static uint32_t* img8;
+static uint32_t* img9;
 static uint32_t* img10;
 static uint32_t* img0;
 
-static int img1Width;
-static int img1Height;
-//static int img1X;
-//static int img1Y;
-
-static int img2Width;
-static int img2Height;
-//static int img2X;
-//static int img2Y;
-
-static int img4Width;
-static int img4Height;
-//static int img4X;
-//static int img4Y;
-
-static int img6Width;
-static int img6Height;
-//static int img6X;
-//static int img6Y;
-
-static int img8Width;
-static int img8Height;
-//static int img8X;
-//static int img8Y;
-
-static int img10Width;
-static int img10Height;
-//static int img10X;
-//static int img10Y;
-
-static int img0Width;
-static int img0Height;
-//static int img0X;
-//static int img0Y;
-
 static int imgTOX;
 static int imgTOY;
+static int imgTOWidth;
+static int imgTOHeight;
+
+static uint32_t* imgTO;
 
 static uint32_t* imgStar;
 static int imgStarWidth;
@@ -240,6 +217,57 @@ static void toggle(int forward) {
 	drawSelectionBox();
 }
 
+static void setTOimg(int TO){
+	switch(TO){
+		case 0:{
+			imgTO = img0;
+			break;
+		}
+		case 1:{
+			imgTO = img1;
+			break;
+		}
+		case 2:{
+			imgTO = img2;
+			break;
+		}
+		case 3:{
+			imgTO = img3;
+			break;
+		}
+		case 4:{
+			imgTO = img4;
+			break;
+		}
+		case 5:{
+			imgTO = img5;
+			break;
+		}
+		case 6:{
+			imgTO = img6;
+			break;
+		}
+		case 7:{
+			imgTO = img7;
+			break;
+		}
+		case 8:{
+			imgTO = img8;
+			break;
+		}
+		case 9:{
+			imgTO = img9;
+			break;
+		}
+		case 10:{
+			imgTO = img10;
+			break;
+		}
+
+	}
+
+	
+}
 
 static void toggleSAVE(int forward) {
 	if(forward)
@@ -355,37 +383,9 @@ static void drawSetupPage() {
 			break;
 		}
 */
-	switch(timeout){
-		case 0:{
-			framebuffer_draw_image(img0, imgTOX, imgTOY, img0Width, img0Height);
-			break;
-		}
-		case 1:{
-			framebuffer_draw_image(img1, imgTOX, imgTOY, img1Width, img1Height);
-			break;
-		}
-		case 2:{
-			framebuffer_draw_image(img2, imgTOX, imgTOY, img2Width, img2Height);
-			break;
-		}
-		case 4:{
-			framebuffer_draw_image(img4, imgTOX, imgTOY, img4Width, img4Height);
-			break;
-		}
-		case 6:{
-			framebuffer_draw_image(img6, imgTOX, imgTOY, img6Width, img6Height);
-			break;
-		}
-		case 8:{
-			framebuffer_draw_image(img8, imgTOX, imgTOY, img8Width, img8Height);
-			break;
-		}
-		case 10:{
-			framebuffer_draw_image(img10, imgTOX, imgTOY, img10Width, img10Height);
-			break;
-		}
-
-	}
+	setTOimg(timeout/1000);
+	framebuffer_draw_image(imgTO, imgTOX, imgTOY, imgTOWidth, imgTOHeight);
+	
 
 	lcd_window_address(2, (uint32_t) CurFramebuffer);
 }
@@ -400,43 +400,43 @@ static int toggleTO(int forward) {
 		{
 		case 0:
 			//framebuffer_print_force("timeout 10s\n");	
-			timeout=10;
+			timeout=10000;
 			//draw 10			
 			break;
 			
-		case 1:
+		case 1000:
 			timeout=0;
 			//draw 10
 			break;
 			
-		case 2:
-			timeout=1;
+		case 2000:
+			timeout=1000;
 			//draw 10
 			break;
 			
-		case 4:
-			timeout=2;
+		case 4000:
+			timeout=2000;
 			//draw 10
 			break;
 			
-		case 6:
-			timeout=4;
+		case 6000:
+			timeout=4000;
 			//draw 10
 			break;
 			
-		case 8:
-			timeout=6;
+		case 8000:
+			timeout=6000;
 			//draw 10
 			break;
 			
-		case 10:
-			timeout=8;
+		case 10000:
+			timeout=8000;
 			//draw 10
 			break;
 			
 		default :
 			framebuffer_print_force("DEFAULT TimeOut set 10s\n");	
-			timeout=10;
+			timeout=10000;
 			break;
 			
 		}
@@ -445,52 +445,39 @@ static int toggleTO(int forward) {
 //		framebuffer_print_force("UP button\n");	
 		switch (timeout){
 		case 0:
-			timeout=1;
-			//draw 10			
+			timeout=1000;
 			break;
 			
-		case 1:
-			timeout=2;
-			//draw 10
+		case 1000:
+			timeout=2000;
 			break;
 			
-		case 2:
-			timeout=4;
-			//draw 10
+		case 2000:
+			timeout=4000;
 			break;
-		case 4 :
-			timeout=6;
-			//draw 10
+		case 4000 :
+			timeout=6000;
 			break;
 			
-		case 6 :
-			timeout=8;
-			//draw 10
+		case 6000 :
+			timeout=8000;
 			break;
 			
-		case 8 :
-		//framebuffer_print_force("TimeOut set 10s\n");	
-			timeout=10;
-			//draw 10
+		case 8000 :
+			timeout=10000;
 			break;
 			
-		case 10 :
+		case 10000 :
 			timeout=0;
-			//draw 10
 			break;
 			
 		default :
-			framebuffer_print_force("DEFAULT TimeOut set 10s\n");	
-			timeout=10;
+			framebuffer_print_force("Uknown timeout encountered, DEFAULT TimeOut set 10s\n");	
+			timeout=10000;
 			break;
 			
 		}	
 	}
-/*	char bufa[5];
-	sprintf(bufa, "%d", timeout);
-	framebuffer_print_force("TimeOut set to ");	
-	framebuffer_print_force(bufa);
-	framebuffer_print_force("s\n");*/
 	drawSetupPage();
 	return(timeout);
 }
@@ -498,7 +485,7 @@ static int toggleTO(int forward) {
 /* ***********************OIB_SETUP*******************************/
 int oib_setup(int ttimeout, int ddefaultOS) {
 	quickBoot = 0;
-	timeout = ttimeout/1000;
+	timeout = ttimeout;
 	defaultOS = ddefaultOS;
 	tempOS=0;
 	char bufa[5];
@@ -525,13 +512,13 @@ int oib_setup(int ttimeout, int ddefaultOS) {
 	imgSaveExitSelected = framebuffer_load_image(dataSaveExitSelectedPNG, dataSaveSelectedPNG_size, &imgSaveExitWidth, &imgSaveExitHeight, TRUE);
 	imgHeader = framebuffer_load_image(dataHeaderPNG, dataHeaderPNG_size, &imgHeaderWidth, &imgHeaderHeight, TRUE);
 	imgSetHeader = framebuffer_load_image(dataSetHeaderPNG, dataSetHeaderPNG_size, &imgSetHeaderWidth, &imgSetHeaderHeight, TRUE);
-	img0 = framebuffer_load_image(data0PNG, data0PNG_size, &img0Width, &img0Height, TRUE);
-	img1 = framebuffer_load_image(data1PNG, data1PNG_size, &img1Width, &img1Height, TRUE);
-	img2 = framebuffer_load_image(data2PNG, data2PNG_size, &img2Width, &img2Height, TRUE);
-	img4 = framebuffer_load_image(data4PNG, data4PNG_size, &img4Width, &img4Height, TRUE);
-	img6 = framebuffer_load_image(data6PNG, data6PNG_size, &img6Width, &img6Height, TRUE);
-	img8 = framebuffer_load_image(data8PNG, data8PNG_size, &img8Width, &img8Height, TRUE);
-	img10 = framebuffer_load_image(data10PNG, data10PNG_size, &img10Width, &img10Height, TRUE);
+	img0 = framebuffer_load_image(data0PNG, data0PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img1 = framebuffer_load_image(data1PNG, data1PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img2 = framebuffer_load_image(data2PNG, data2PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img4 = framebuffer_load_image(data4PNG, data4PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img6 = framebuffer_load_image(data6PNG, data6PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img8 = framebuffer_load_image(data8PNG, data8PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img10 = framebuffer_load_image(data10PNG, data10PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
 
 	imgStar = framebuffer_load_image(dataStarPNG, dataStarPNG_size, &imgStarWidth, &imgStarHeight, TRUE);
 	imgRStar = framebuffer_load_image(dataRStarPNG, dataRStarPNG_size, &imgStarWidth, &imgStarHeight, TRUE);
@@ -540,8 +527,8 @@ int oib_setup(int ttimeout, int ddefaultOS) {
 
 	imgiPhoneOSX = (FBWidth - imgiPhoneOSWidth) / 2;
 	imgiPhoneOSY = 84;
-
-	imgTOX = (FBWidth - img0Width);
+	
+	imgTOX = (FBWidth - imgTOWidth);
 	imgTOY = 90;
 
 	imgConsoleX = (FBWidth - imgConsoleWidth) / 2;
@@ -609,14 +596,6 @@ int oib_setup(int ttimeout, int ddefaultOS) {
 	CurFramebuffer = (volatile uint32_t*) NextFramebuffer;
 	drawSetupPage();
 
-	framebuffer_print_force("DefaultOS =");
-	sprintf(bufa, "%d", defaultOS);
-	framebuffer_print_force(bufa);
-	framebuffer_print_force("\nTimeout =");
-	sprintf(bufa, "%d", timeout);
-	framebuffer_print_force(bufa);
-	framebuffer_print_force("s\n");
-
 	pmu_set_iboot_stage(0);
 
 	memcpy((void*)NextFramebuffer, (void*) CurFramebuffer, NextFramebuffer - (uint32_t)CurFramebuffer);
@@ -682,14 +661,14 @@ rebump:
 
 	if(Selection == MenuSelectioniPhoneOS) {
 		defaultOS=0;
-		framebuffer_print_force("defaultOS set (iphone)\n");
+		//framebuffer_print_force("defaultOS set (iphone)\n");
 		drawSetupPage();
 		goto rebump;
 	}
 
 	if(Selection == MenuSelectionConsole) {
 		defaultOS=2;
-		framebuffer_print_force("defaultOS set (console)\n");	
+		//framebuffer_print_force("defaultOS set (console)\n");	
 		drawSetupPage();
 		goto rebump;
 }
@@ -741,7 +720,7 @@ rebump:
 
 	if(Selection == MenuSelectionAndroidOS) {
 		defaultOS=1;
-		framebuffer_print_force("defaultOS set (DROID)\n");
+		//framebuffer_print_force("defaultOS set (DROID)\n");
 		drawSetupPage();
 		goto rebump;
 	}
@@ -752,9 +731,11 @@ rebump:
 
 
 /* ***********************MENU_SETUP*******************************/
-int menu_setup(int ttimeout, int ddefaultOS) {
-	timeout=ttimeout * 1000;
-	defaultOS=ddefaultOS;
+int menu_setup(int ttimeout) {
+	timeout=ttimeout;	
+	const char* sDefaultOS = nvram_getvar("opib-default-os");
+	if(sDefaultOS)
+		defaultOS = parseNumber(sDefaultOS);
 	tempOS=0;
 	const char* stempOS = nvram_getvar("opib-temp-os");
 	if(!(quickBoot==0)){
@@ -784,10 +765,26 @@ int menu_setup(int ttimeout, int ddefaultOS) {
 	imgSettings = framebuffer_load_image(dataSettingsPNG, dataSettingsPNG_size, &imgSettingsWidth, &imgSettingsHeight, TRUE);
 	imgSettingsSelected = framebuffer_load_image(dataSettingsSelectedPNG, dataSettingsSelectedPNG_size, &imgSettingsWidth, &imgSettingsHeight, TRUE);
 
+
+	img0 = framebuffer_load_image(data0PNG, data0PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img1 = framebuffer_load_image(data1PNG, data1PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img2 = framebuffer_load_image(data2PNG, data2PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img3 = framebuffer_load_image(data3PNG, data3PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img4 = framebuffer_load_image(data4PNG, data4PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img5 = framebuffer_load_image(data5PNG, data5PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img6 = framebuffer_load_image(data6PNG, data6PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img7 = framebuffer_load_image(data7PNG, data7PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img8 = framebuffer_load_image(data8PNG, data8PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img9 = framebuffer_load_image(data9PNG, data9PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+	img10 = framebuffer_load_image(data10PNG, data10PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
+
 	bufferPrintf("menu: images loaded\r\n");
 
 	imgiPhoneOSX = (FBWidth - imgiPhoneOSWidth) / 2;
 	imgiPhoneOSY = 84;
+
+	imgTOX = (FBWidth - imgTOWidth);
+	imgTOY = 90;
 
 	imgConsoleX = (FBWidth - imgConsoleWidth) / 2;
 	imgConsoleY = 207;
@@ -857,11 +854,27 @@ int menu_setup(int ttimeout, int ddefaultOS) {
 	uint64_t powerStartTime = timer_get_system_microtime();
 
 	//timeout = timeout * 1000;
+	
+	int timeoutLeft = timeout / 1000;
+	int timeoutLeftb = timeout / 1000;
 	while(TRUE) {
+		if(timeout > 0){
+			if(has_elapsed(startTime, (uint64_t)(timeout - (timeoutLeft * 1000)) * 1000)){
+				timeoutLeft -= 1;
+				if(timeoutLeft != timeoutLeftb){
+					setTOimg(timeoutLeft);
+					framebuffer_draw_image(imgTO, imgTOX, imgTOY, imgTOWidth, imgTOHeight);				
+					lcd_window_address(2, (uint32_t) CurFramebuffer);
+					OtherFramebuffer = CurFramebuffer;
+					timeoutLeftb -= 1;
+				}
+			}
+		}
+		// timeout print code here ^^  originally by apocalypse re-done by ZinnX
 		if(buttons_is_pushed(BUTTONS_HOLD)) {
-			if(has_elapsed(powerStartTime, (uint64_t)300 * 1000)) {
-
-			} else if(has_elapsed(powerStartTime, (uint64_t)200 * 1000)) {
+			
+			if(has_elapsed(powerStartTime, (uint64_t)200 * 1000)) {
+				startTime = timer_get_system_microtime();
 				toggle(TRUE);
 			}
 
@@ -871,6 +884,7 @@ int menu_setup(int ttimeout, int ddefaultOS) {
 			udelay(200000);
 		} else {
 			powerStartTime = timer_get_system_microtime();
+
 			udelay(200000);
 		}
 #ifndef CONFIG_IPOD
@@ -925,9 +939,6 @@ int menu_setup(int ttimeout, int ddefaultOS) {
 		framebuffer_setdisplaytext(TRUE);
 		framebuffer_clear();
 		udelay(10000);
-//		nvram_setvar("opib-default-os", "2");
-//		udelay(200000);
-//		nvram_save();
 		framebuffer_setdisplaytext(TRUE);
 		framebuffer_clear();
 		udelay(10000);
@@ -936,16 +947,9 @@ int menu_setup(int ttimeout, int ddefaultOS) {
 //clear screen
 		framebuffer_setdisplaytext(TRUE);
 		framebuffer_clear();
-//get our settings again, i hate reading off of nvram again
-/*		const char* sMenuTimeout = nvram_getvar("opib-menu-timeout");
-		const char* sDefaultOS = nvram_getvar("opib-default-os");
-		if(sDefaultOS)
-			defaultOS = parseNumber(sDefaultOS);
-		if(sMenuTimeout)
-			timeout = parseNumber(sMenuTimeout);
-*/
+
 //and re-run menu_setup;
-		menu_setup(timeout, defaultOS);
+		menu_setup(timeout);
 		
 	}
 
