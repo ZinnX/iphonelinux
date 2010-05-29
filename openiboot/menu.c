@@ -34,6 +34,12 @@
 #include "images/SaveExitPNG.h"
 #include "images/SaveExitSelectedPNG.h"
 #include "images/SetHeaderPNG.h"
+
+#include "images/ReturnPNG.h"
+#include "images/ReturnSelectedPNG.h"
+#include "images/RecoveryModePNG.h"
+#include "images/RecoveryModeSelectedPNG.h"
+
 #include "images/0PNG.h"
 #include "images/1PNG.h"
 #include "images/2PNG.h"
@@ -99,6 +105,20 @@ static int imgSetHeaderHeight;
 static int imgSetHeaderX;
 static int imgSetHeaderY;
 
+static uint32_t* imgReturnSelected;
+static uint32_t* imgReturn;
+static int imgReturnWidth;
+static int imgReturnHeight;
+static int imgReturnX;
+static int imgReturnY;
+
+static uint32_t* imgRecoverySelected;
+static uint32_t* imgRecovery;
+static int imgRecoveryWidth;
+static int imgRecoveryHeight;
+static int imgRecoveryX;
+static int imgRecoveryY;
+
 static uint32_t* imgSaveSelected;
 static uint32_t* imgSave;
 static int imgSaveWidth;
@@ -141,6 +161,8 @@ static int defaultOS;
 static int timeout;
 static int tempOS;
 static int quickBoot;
+static int recovery;
+static int srecovery;
 
 typedef enum MenuSelection {
 	MenuSelectioniPhoneOS,
@@ -148,7 +170,9 @@ typedef enum MenuSelection {
 	MenuSelectionAndroidOS,
 	MenuSelectionSettings,
 	MenuSelectionSave,
-	MenuSelectionSaveExit
+	MenuSelectionSaveExit,
+	MenuSelectionRecovery,
+	MenuSelectionReturn
 } MenuSelection;
 
 static MenuSelection Selection;
@@ -269,7 +293,7 @@ static void setTOimg(int TO){
 	
 }
 
-static void toggleSAVE(int forward) {
+static void toggleSettings(int forward) {
 	if(forward)
 	{
 		if(Selection == MenuSelectioniPhoneOS)
@@ -277,6 +301,10 @@ static void toggleSAVE(int forward) {
 		else if(Selection == MenuSelectionConsole)
 			Selection = MenuSelectionAndroidOS;
 		else if(Selection == MenuSelectionAndroidOS)
+			Selection = MenuSelectionReturn;
+		else if(Selection == MenuSelectionReturn)
+			Selection = MenuSelectionRecovery;
+		else if(Selection == MenuSelectionRecovery)
 			Selection = MenuSelectionSave;
 		else if(Selection == MenuSelectionSave)
 			Selection = MenuSelectionSaveExit;
@@ -289,6 +317,10 @@ static void toggleSAVE(int forward) {
 		else if(Selection == MenuSelectionSaveExit)
 			Selection = MenuSelectionSave;
 		else if(Selection == MenuSelectionSave)
+			Selection = MenuSelectionRecovery;
+		else if(Selection == MenuSelectionRecovery)
+			Selection = MenuSelectionReturn;
+		else if(Selection == MenuSelectionAndroidOS)
 			Selection = MenuSelectionAndroidOS;
 		else if(Selection == MenuSelectionAndroidOS)
 			Selection = MenuSelectionConsole;
@@ -306,43 +338,94 @@ static void drawSetupPage() {
 	currentWindow->framebuffer.buffer = CurFramebuffer;
 	OtherFramebuffer = oldFB;
 
-	if(Selection == MenuSelectioniPhoneOS) {
+	switch(Selection){
+	case MenuSelectioniPhoneOS:
 		framebuffer_draw_image(imgiPhoneOSSelected, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
 		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
 		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
-	}
-
-	if(Selection == MenuSelectionConsole) {
+		framebuffer_draw_image(imgRecovery, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturn, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
+	case MenuSelectionConsole:
 		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsoleSelected, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
 		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
 		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
-	}
-
-	if(Selection == MenuSelectionAndroidOS) {
+		framebuffer_draw_image(imgRecovery, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturn, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
+	case MenuSelectionAndroidOS:
 		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOSSelected, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
 		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
 		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
-	}
-	if(Selection == MenuSelectionSave) {
+		framebuffer_draw_image(imgRecovery, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturn, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
+	case MenuSelectionRecovery:
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+		framebuffer_draw_image(imgRecoverySelected, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturn, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
+	case MenuSelectionReturn:
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+		framebuffer_draw_image(imgRecovery, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturnSelected, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
+	case MenuSelectionSave:
 		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
 		framebuffer_draw_image(imgSaveSelected, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
 		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
-	}
-	if(Selection == MenuSelectionSaveExit) {
+		framebuffer_draw_image(imgRecovery, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturn, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
+	case MenuSelectionSaveExit:
 		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
 		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
 		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
 		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
 		framebuffer_draw_image(imgSaveExitSelected, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+		framebuffer_draw_image(imgRecovery, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturn, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
+	default:
+		framebuffer_draw_image(imgiPhoneOS, imgiPhoneOSX, imgiPhoneOSY, imgiPhoneOSWidth, imgiPhoneOSHeight);
+		framebuffer_draw_image(imgConsole, imgConsoleX, imgConsoleY, imgConsoleWidth, imgConsoleHeight);
+		framebuffer_draw_image(imgAndroidOS, imgAndroidOSX, imgAndroidOSY, imgAndroidOSWidth, imgAndroidOSHeight);
+		framebuffer_draw_image(imgSave, imgSaveX, imgSaveY, imgSaveWidth, imgSaveHeight);
+		framebuffer_draw_image(imgSaveExit, imgSaveExitX, imgSaveExitY, imgSaveExitWidth, imgSaveExitHeight);
+		framebuffer_draw_image(imgRecovery, imgRecoveryX, imgRecoveryY, imgRecoveryWidth, imgRecoveryHeight);
+		framebuffer_draw_image(imgReturn, imgReturnX, imgReturnY, imgReturnWidth, imgReturnHeight);
+		break;
 	}
+
+
+/*	if(Selection == MenuSelectioniPhoneOS) {
+	}
+
+	if(Selection == MenuSelectionConsole) {
+	}
+
+	if(Selection == MenuSelectionAndroidOS) {
+	}
+	if(Selection == MenuSelectionSave) {
+	}
+	if(Selection == MenuSelectionSaveExit) {
+	}*/
 	switch(defaultOS){
 		case 0:		
 			framebuffer_draw_image(imgStar, imgiPhoneOSX, imgiPhoneOSY, imgStarWidth, imgStarHeight);
@@ -368,6 +451,9 @@ static void drawSetupPage() {
 			break;
 		default:
 			break;
+		}
+	if(recovery==1){
+			framebuffer_draw_image(imgRStar, imgRecoveryX, imgRecoveryY, imgStarWidth, imgStarHeight);		
 		}
 /*	switch(quickBoot){
 		case 1:		
@@ -482,14 +568,35 @@ static int toggleTO(int forward) {
 	return(timeout);
 }
 
+int nvram_number(const char* value){
+	int iData;
+	const char* sData = nvram_getvar(value);
+	if(sData)
+		iData = parseNumber(sData);
+	else
+		iData=FALSE;
+	return iData;
+}
+
 /* ***********************OIB_SETUP*******************************/
 int oib_setup(int ttimeout, int ddefaultOS) {
+	//framebuffer_print_force("blah\n");
+	recovery=0;
+	srecovery=0;
 	quickBoot = 0;
 	timeout = ttimeout;
 	defaultOS = ddefaultOS;
 	tempOS=0;
 	char bufa[5];
+	char* bufb;
 
+	//check if recovery mode is on
+	const char* sRecovery = nvram_getvar("auto-boot");
+	if(sRecovery){
+		if(strcmp(sRecovery, "false")==0){
+			recovery=1;
+		}
+	}
 	CurFramebuffer = OtherFramebuffer;
 	currentWindow->framebuffer.buffer = CurFramebuffer;
 	lcd_window_address(2, (uint32_t) CurFramebuffer);
@@ -512,6 +619,10 @@ int oib_setup(int ttimeout, int ddefaultOS) {
 	imgSaveExitSelected = framebuffer_load_image(dataSaveExitSelectedPNG, dataSaveSelectedPNG_size, &imgSaveExitWidth, &imgSaveExitHeight, TRUE);
 	imgHeader = framebuffer_load_image(dataHeaderPNG, dataHeaderPNG_size, &imgHeaderWidth, &imgHeaderHeight, TRUE);
 	imgSetHeader = framebuffer_load_image(dataSetHeaderPNG, dataSetHeaderPNG_size, &imgSetHeaderWidth, &imgSetHeaderHeight, TRUE);
+	imgReturn = framebuffer_load_image(dataReturnPNG, dataReturnPNG_size, &imgReturnWidth, &imgReturnHeight, TRUE);
+	imgReturnSelected = framebuffer_load_image(dataReturnSelectedPNG, dataReturnSelectedPNG_size, &imgReturnWidth, &imgReturnHeight, TRUE);
+	imgRecovery = framebuffer_load_image(dataRecoveryModePNG, dataRecoveryModePNG_size, &imgRecoveryWidth, &imgRecoveryHeight, TRUE);
+	imgRecoverySelected = framebuffer_load_image(dataRecoveryModeSelectedPNG, dataRecoveryModeSelectedPNG_size, &imgRecoveryWidth, &imgRecoveryHeight, TRUE);
 	img0 = framebuffer_load_image(data0PNG, data0PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
 	img1 = framebuffer_load_image(data1PNG, data1PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
 	img2 = framebuffer_load_image(data2PNG, data2PNG_size, &imgTOWidth, &imgTOHeight, TRUE);
@@ -537,8 +648,13 @@ int oib_setup(int ttimeout, int ddefaultOS) {
 	imgAndroidOSX = (FBWidth - imgAndroidOSWidth) / 2;
 	imgAndroidOSY = 330;
 
+	imgReturnX = (FBWidth - imgReturnWidth);
+	imgReturnY = 170;	
+	imgRecoveryX = (FBWidth - imgRecoveryWidth);
+	imgRecoveryY = 230;
+
 	imgSaveX = (FBWidth - imgSaveWidth);
-	imgSaveY = 170;
+	imgSaveY = 300;
 
 	imgSaveExitX = (FBWidth - imgSaveExitWidth);
 	imgSaveExitY = 370;
@@ -609,7 +725,7 @@ rebump:
 			if(has_elapsed(powerStartTime, (uint64_t)300 * 1000)) {
 
 			} else if(has_elapsed(powerStartTime, (uint64_t)200 * 1000)) {
-				toggleSAVE(TRUE);
+				toggleSettings(TRUE);
 				drawSetupPage();
 			}
 			if(has_elapsed(powerStartTime, (uint64_t)10000 * 1000)) {
@@ -669,7 +785,20 @@ rebump:
 		defaultOS=2;
 		drawSetupPage();
 		goto rebump;
-}
+	}
+
+	if(Selection == MenuSelectionReturn) {
+	}
+
+	if(Selection == MenuSelectionRecovery) {
+		srecovery=1;
+		if(recovery==1)
+			recovery=0;
+		else
+			recovery=1;
+		drawSetupPage();
+		goto rebump;
+	}
 
 	if(Selection == MenuSelectionSave) {
 		// Reset framebuffer back to original if necessary
@@ -679,7 +808,15 @@ rebump:
 			currentWindow->framebuffer.buffer = CurFramebuffer;
 			lcd_window_address(2, (uint32_t) CurFramebuffer);
 		}
-
+		if(srecovery==1){
+			if(recovery==1){
+				bufb="false";
+			}
+			else{
+				bufb="true";
+			}
+			nvram_setvar("auto-boot", bufb);
+		}
 		framebuffer_setdisplaytext(TRUE);
 		framebuffer_clear();
 		sprintf(bufa, "%d", defaultOS);
@@ -704,6 +841,15 @@ rebump:
 
 		framebuffer_setdisplaytext(TRUE);
 		framebuffer_clear();
+		if(srecovery==1){
+			if(recovery==TRUE){
+				bufb="true";
+			}
+			else{
+				bufb="false";
+			}
+			nvram_setvar("auto-boot", bufb);
+		}
 		sprintf(bufa, "%d", defaultOS);
 		nvram_setvar("opib-default-os", bufa);
 		sprintf(bufa, "%d", timeout);
